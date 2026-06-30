@@ -25,7 +25,7 @@ public class Lexer {
     private static final String PATTERN_STRING =
         "(?<COMMENT>//[^\n]*|/\\*[^*]*(?:\\*+[^*/][^*]*)*\\*+/|#[^\n]*)"       // Java/JS // and /* */, Python #
         + "|(?<STRING>\"\"\"[\\s\\S]*?\"\"\"|\"\"[\\s\\S]*?\"\"|\"\"\"[\\s\\S]*?\"\"\"|'(?:[^'\\\\]|\\\\.)*'|\"(?:[^\"\\\\]|\\\\.)*\"|`[^`]*`)" // triple-quoted (Python) and standard strings
-        + "|(?<NUMBER>\\b\\d+\\.?\\d*(?:[eE][+-]?\\d+)?[lLfFdD]?\\b)"       // numeric literals
+        + "|(?<NUMBER>\\b\\d+\\.\\d+(?:[eE][+-]?\\d+)?[lLfFdD]?\\b|\\b\\d+[lLfFdD]?\\b)"  // numeric literals (decimal requires digit after dot)
         + "|(?<IDENTIFIER>[a-zA-Z_$][a-zA-Z0-9_$]*)"                         // identifiers (classified post-match)
         + "|(?<SYMBOL>[{}()\\[\\];,.<>!=+\\-*/%&|^~?:@])"                    // symbols + @ for annotations
         + "|(?<WHITESPACE>[ \\t]+|\\r?\\n)";                                  // spaces, tabs, newlines

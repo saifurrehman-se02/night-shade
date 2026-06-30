@@ -60,7 +60,10 @@ public class ControlFlowFlattener implements PoisonStrategy {
             String returnStatement = null;
             boolean hasMultipleReturns = false;
             boolean hasComplexStructures = false;
+            boolean hasLocalVarDeclarations = false;
             int innerBraceDepth = 0;
+            Pattern localVarDecl = Pattern.compile(
+                "^\\s*(int|long|double|float|boolean|char|String|byte|short|var|\\w+(?:<[^>]*>)?)\\s+\\w+\\s*[=;]");
 
             for (int j = bodyStart; j < bodyEnd; j++) {
                 String bodyLine = lines.get(j);
@@ -83,6 +86,10 @@ public class ControlFlowFlattener implements PoisonStrategy {
                     hasComplexStructures = true;
                 }
 
+                if (localVarDecl.matcher(bodyTrimmed).matches()) {
+                    hasLocalVarDeclarations = true;
+                }
+
                 if (bodyTrimmed.startsWith("return ")) {
                     if (returnStatement != null) {
                         hasMultipleReturns = true;
@@ -93,7 +100,7 @@ public class ControlFlowFlattener implements PoisonStrategy {
                 }
             }
             
-            if (innerBraceDepth != 0 || hasMultipleReturns || hasComplexStructures || bodyStatements.size() < 2) {
+            if (innerBraceDepth != 0 || hasMultipleReturns || hasComplexStructures || hasLocalVarDeclarations || bodyStatements.size() < 2) {
                 continue; // Skip: unsafe to flatten
             }
 

@@ -314,15 +314,6 @@
     -fx-padding: 8 16 8 16;
 }
 
-.code-scroll {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-}
-
-.code-scroll .viewport {
-    -fx-background-color: transparent;
-}
-
 .code-view {
     -fx-background-color: transparent;
     -fx-border-color: transparent;

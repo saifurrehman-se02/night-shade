@@ -36,6 +36,6 @@ public final class Token {
     @Override
     public String toString() {
         return String.format("Token[%s, \"%s\", L%d:C%d]",
-            type, value.replace("\n", "\\n"), lineNumber, columnStart);
+            type, value != null ? value.replace("\n", "\\n") : "null", lineNumber, columnStart);
     }
 }

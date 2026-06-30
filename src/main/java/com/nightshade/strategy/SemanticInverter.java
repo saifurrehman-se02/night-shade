@@ -42,6 +42,7 @@ public class SemanticInverter implements PoisonStrategy {
     public ObfuscationResult apply(SourceFile source, ASTNode ast, SymbolTable symbols) {
         Map<String, String> lineMapping = new HashMap<>(); 
         Set<String> renamedNames = new HashSet<>();
+        Set<String> usedReplacements = new HashSet<>();
 
         List<ASTNode> identifierNodes = ast.findAll("STATEMENT");
         for (ASTNode node : identifierNodes) {
@@ -52,7 +53,12 @@ public class SemanticInverter implements PoisonStrategy {
             String original = t.getValue();
             // Generate deterministic but misleading replacement
             int hash = (source.getAbsolutePath() + "::" + original).hashCode() & Integer.MAX_VALUE;
-            String replacement = MISLEADING_TERMS[hash % MISLEADING_TERMS.length] + "_" + (hash % 1000);
+            String replacement;
+            do {
+                replacement = MISLEADING_TERMS[hash % MISLEADING_TERMS.length] + "_" + (hash % 1000);
+                hash = (hash + 1) & Integer.MAX_VALUE;
+            } while (usedReplacements.contains(replacement));
+            usedReplacements.add(replacement);
 
             lineMapping.put(original, replacement);
             renamedNames.add(original);
