@@ -37,6 +37,7 @@ public class ObfuscationEngine {
     private final EntropyCalculator entropyCalc;
     private final LogService logService;
     private final double entropyThreshold;
+    private final boolean libraryMode;
 
     public ObfuscationEngine(List<PoisonStrategy> strategies,
                              Lexer lexer,
@@ -45,6 +46,17 @@ public class ObfuscationEngine {
                              EntropyCalculator entropyCalc,
                              LogService logService,
                              double entropyThreshold) {
+        this(strategies, lexer, parser, serializer, entropyCalc, logService, entropyThreshold, false);
+    }
+
+    public ObfuscationEngine(List<PoisonStrategy> strategies,
+                             Lexer lexer,
+                             Parser parser,
+                             Serializer serializer,
+                             EntropyCalculator entropyCalc,
+                             LogService logService,
+                             double entropyThreshold,
+                             boolean libraryMode) {
         this.strategies    = new ArrayList<>(strategies);
         this.lexer         = lexer;
         this.parser        = parser;
@@ -52,6 +64,7 @@ public class ObfuscationEngine {
         this.entropyCalc   = entropyCalc;
         this.logService    = logService;
         this.entropyThreshold = entropyThreshold;
+        this.libraryMode   = libraryMode;
     }
 
     /**
@@ -61,6 +74,10 @@ public class ObfuscationEngine {
      * @return List of ObfuscationResult (one per file)
      */
     public List<ObfuscationResult> process(List<SourceFile> files) {
+        return process(files, null);
+    }
+
+    public List<ObfuscationResult> process(List<SourceFile> files, java.util.function.BiConsumer<Integer, Integer> progressCallback) {
         List<ObfuscationResult> results = new ArrayList<>();
         SymbolTable symbols = new SymbolTable();
 
@@ -68,6 +85,42 @@ public class ObfuscationEngine {
         logService.log("Session salt: " + symbols.getSessionSalt().substring(0, 8) + "...");
         logService.log("Strategies enabled: " + countEnabled() + "/" + strategies.size());
         logService.log("Files to process: " + files.size());
+
+        // Pre-scan all files to protect skipped blocks and public APIs (cross-file resolution)
+        logService.log("Pre-scanning files for protected symbols...");
+        java.util.regex.Pattern identPat = java.util.regex.Pattern.compile("[a-zA-Z_$][a-zA-Z0-9_$]*");
+        for (SourceFile file : files) {
+            try {
+                // Collect skipped block identifiers
+                boolean skipping = false;
+                for (String line : file.getRawLines()) {
+                    String trimmed = line.trim();
+                    if (trimmed.contains("@nightshade:skip")) skipping = true;
+                    if (skipping) {
+                        java.util.regex.Matcher m = identPat.matcher(line);
+                        while (m.find()) {
+                            symbols.protect(m.group());
+                        }
+                    }
+                    if (trimmed.contains("@nightshade:resume")) skipping = false;
+                }
+
+                // If library mode, also parse to collect public APIs
+                if (libraryMode) {
+                    var tokens = lexer.tokenize(file.getRawLines());
+                    parser.parse(tokens);
+                }
+            } catch (Exception e) {
+                logService.logDebug("  Pre-scan warning for " + file.getFileName() + ": " + e.getMessage());
+            }
+        }
+
+        if (libraryMode) {
+            logService.log("Library mode enabled. Protecting " + parser.getPublicApis().size() + " public APIs.");
+            for (String api : parser.getPublicApis()) {
+                symbols.protect(api);
+            }
+        }
 
         for (int i = 0; i < files.size(); i++) {
             SourceFile file = files.get(i);
@@ -89,6 +142,10 @@ public class ObfuscationEngine {
                 ObfuscationResult unchanged = new ObfuscationResult(file, file, 0.0);
                 results.add(unchanged);
             }
+
+            if (progressCallback != null) {
+                progressCallback.accept(i + 1, files.size());
+            }
         }
 
         logService.log("Pipeline complete. " + results.size() + " files processed.");
@@ -99,10 +156,6 @@ public class ObfuscationEngine {
         // Step 1 + 2: Lex + Parse the ORIGINAL source
         var tokens = lexer.tokenize(original.getRawLines());
         var ast    = parser.parse(tokens);
-
-        for (String api : parser.getPublicApis()) {
-            symbols.protect(api);
-        }
 
         // Step 3: Chain strategies — each receives the OUTPUT of the previous
         SourceFile current = original;
@@ -131,16 +184,16 @@ public class ObfuscationEngine {
         // Step 5: Calculate final entropy score
         double entropy = entropyCalc.calculate(merged);
 
-        return new ObfuscationResult(original, current, entropy) {{
-            setRenamedIdentifiers(merged.getRenamedIdentifiers());
-            setDeadBlocksInjected(merged.getDeadBlocksInjected());
-            setCommentsPoisoned(merged.getCommentsPoisoned());
-            setStringsEncoded(merged.getStringsEncoded());
-            setWhitespaceChanges(merged.getWhitespaceChanges());
-            setTotalIdentifiers(merged.getTotalIdentifiers());
-            setTotalMethods(merged.getTotalMethods());
-            setTotalComments(merged.getTotalComments());
-        }};
+        ObfuscationResult finalResult = new ObfuscationResult(original, current, entropy);
+        finalResult.setRenamedIdentifiers(merged.getRenamedIdentifiers());
+        finalResult.setDeadBlocksInjected(merged.getDeadBlocksInjected());
+        finalResult.setCommentsPoisoned(merged.getCommentsPoisoned());
+        finalResult.setStringsEncoded(merged.getStringsEncoded());
+        finalResult.setWhitespaceChanges(merged.getWhitespaceChanges());
+        finalResult.setTotalIdentifiers(merged.getTotalIdentifiers());
+        finalResult.setTotalMethods(merged.getTotalMethods());
+        finalResult.setTotalComments(merged.getTotalComments());
+        return finalResult;
     }
 
     private ObfuscationResult mergeResults(SourceFile original, SourceFile finalOutput,

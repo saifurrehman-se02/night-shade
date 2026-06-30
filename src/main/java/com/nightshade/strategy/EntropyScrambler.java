@@ -51,11 +51,13 @@ public class EntropyScrambler implements PoisonStrategy {
             if (t == null || t.getType() != TokenType.IDENTIFIER) continue;
             if (!symbols.isUserDefined(t.getValue())) continue;
 
-            String scope = node.getScopePath();
-            String replacement = symbols.resolve(t.getValue(), scope);
+            // Use global (scope-unaware) resolution for field consistency:
+            // the same identifier name gets the same replacement everywhere,
+            // preventing compilation errors when fields are accessed via this. or
+            // from different methods. Scope-aware renaming caused field declarations
+            // and field accesses to get different replacements in the same class.
+            String replacement = symbols.resolve(t.getValue());
 
-            // We track per-file mapping for serializer: "original" → replacement
-            // (last scope wins for globals, which is acceptable for our use case)
             lineMapping.put(t.getValue(), replacement);
             renamedNames.add(t.getValue());
         }

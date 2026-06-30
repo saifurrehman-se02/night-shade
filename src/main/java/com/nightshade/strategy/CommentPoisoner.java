@@ -90,10 +90,17 @@ public class CommentPoisoner implements PoisonStrategy {
             String line = lines.get(i);
             String trimmed = line.trim();
             
-            if (trimmed.contains("@nightshade:skip")) skipping = true;
-            if (trimmed.contains("@nightshade:resume")) skipping = false;
-            
-            if (skipping) continue;
+            if (trimmed.contains("@nightshade:skip")) {
+                skipping = true;
+                continue;
+            }
+            if (trimmed.contains("@nightshade:resume")) {
+                skipping = false;
+                continue;
+            }
+            if (skipping) {
+                continue;
+            }
 
             if (!ext.equals(".py")) {
                 if (!inBlockComment && trimmed.startsWith("/*")) {

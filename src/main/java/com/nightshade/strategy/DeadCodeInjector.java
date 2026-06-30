@@ -188,31 +188,51 @@ public class DeadCodeInjector implements PoisonStrategy {
             }
         }
 
+        boolean skipping = false;
+        boolean inBlockComment = false;
         for (int i = 0; i < lines.size(); i++) {
-            String line = lines.get(i).trim();
+            String rawLine = lines.get(i);
+            String line = rawLine.trim();
+            if (line.contains("@nightshade:skip")) {
+                skipping = true;
+            }
+            if (line.contains("@nightshade:resume")) {
+                skipping = false;
+            }
+
+            // Track block comments to avoid false brace counting
+            if (line.contains("/*")) inBlockComment = true;
+            if (line.contains("*/")) { inBlockComment = false; continue; }
+            if (inBlockComment) continue;
+
             depth += depthChanges[i];
 
-            // Detect method start: depth goes from 1 to 2 and line contains (
-            if (depth == 2 && !inMethod &&
-                (line.contains("(") && !line.startsWith("if") && !line.startsWith("for")
-                 && !line.startsWith("while") && !line.startsWith("switch"))) {
-                inMethod = true;
+            // Detect method start: depth goes to brace depth of class+1 and line contains (
+            // Exclude control flow, annotations, and try/catch keywords
+            if (depth >= 2 && !inMethod && !skipping) {
+                String stripped = line.replaceAll("\"[^\"]*\"", "").replaceAll("'[^']*'", "");
+                if (stripped.contains("(") && !stripped.startsWith("if") && !stripped.startsWith("for")
+                    && !stripped.startsWith("while") && !stripped.startsWith("switch")
+                    && !stripped.startsWith("try") && !stripped.startsWith("catch")
+                    && !stripped.startsWith("@") && !stripped.startsWith("synchronized")) {
+                    inMethod = true;
+                }
             }
 
             // Track return statements inside methods
-            if (inMethod && line.startsWith("return ")) {
+            if (inMethod && line.startsWith("return ") && !skipping) {
                 returnLines.add(i);
             }
 
-            // Method end
-            if (depth == 1 && (line.endsWith("}") || line.equals("}")) && inMethod) {
+            // Method end: be more precise - check for standalone closing braces
+            if (inMethod && depth >= 1 && line.matches("}.*") && !line.contains("{")) {
                 inMethod = false;
             }
         }
         return returnLines;
     }
 
-    private String[] selectDeadBlock(int lineIndex, String ext, List<String> lines, int methodIdx) {
+    private String[] selectDeadBlock(int lineIndex, String ext, List<String> lines, @SuppressWarnings("unused") int methodIdx) {
         // Contextual selection: analyze surrounding lines to pick opposite domain
         int domainHint = detectDomain(lines, lineIndex);
         int blockIdx = (domainHint + 5) % JAVA_DEAD_BLOCKS.length; // +5 = opposite domain

@@ -4,162 +4,189 @@
 <?import javafx.scene.text.*?>
 
 <!--
-  Nightshade v3.5.0 Main Layout
-  
-  Layout: BorderPane (root)
-    ├── TOP: Header bar with logo + title + status label
-    ├── LEFT: File tree panel (fixed 240px width)
-    ├── CENTER: SplitPane — before/after diff view
-    │     ├── LEFT: Source code TextArea (original)
-    │     └── RIGHT: Obfuscated code TextArea (poisoned)
-    ├── BOTTOM: Log ListView + Stats bar
-    └── [RIGHT panel hidden — stats drawer]
+  Nightshade v3.5.0 Premium Obsidian Layout
+  Adheres to taste-skill guidelines:
+    - Double-Bezel nested panel architecture for all controls
+    - Button-in-Button interactive controls
+    - Symmetric spacing and clean high-density developer styling
 -->
 <BorderPane xmlns="http://javafx.openjfx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.nightshade.controller.MainController"
             styleClass="root-pane">
 
-    <!-- ── TOP: Header ────────────────────────────────────────────────── -->
+    <!-- ── TOP: Header Bar ────────────────────────────────────────────── -->
     <top>
         <HBox styleClass="header-bar" alignment="CENTER_LEFT">
             <Label text="☽" styleClass="logo-glyph" />
             <Label text="NIGHTSHADE" styleClass="app-title" />
             <Label text="v3.5.0" styleClass="version-badge" />
             <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="statusLabel" text="Ready" styleClass="status-ready" />
+            <Label fx:id="statusLabel" text="READY" styleClass="status-ready" />
             <Button fx:id="aboutBtn" text="About" styleClass="header-btn"
                     onAction="#onAboutClicked" />
         </HBox>
     </top>
 
-    <!-- ── LEFT: File Tree + Input Controls ───────────────────────────── -->
+    <!-- ── LEFT: Side Panel (Control Drawer) ─────────────────────────── -->
     <left>
-        <VBox styleClass="left-panel" prefWidth="240" spacing="0">
+        <VBox styleClass="left-panel" prefWidth="270" spacing="0">
 
-            <!-- Input directory picker -->
-            <VBox styleClass="control-section" spacing="6">
-                <Label text="INPUT DIRECTORY" styleClass="section-label" />
-                <HBox spacing="6">
-                    <TextField fx:id="inputPathField" styleClass="path-field"
-                               promptText="Select directory..." HBox.hgrow="ALWAYS" />
-                    <Button text="..." styleClass="browse-btn" onAction="#onBrowseInput"
-                            fx:id="browseInputBtn" />
-                </HBox>
+            <!-- Input directory picker (Double-Bezel) -->
+            <VBox styleClass="control-section-outer">
+                <VBox styleClass="control-section" spacing="6">
+                    <Label text="INPUT DIRECTORY" styleClass="section-label" />
+                    <HBox spacing="6" alignment="CENTER_LEFT">
+                        <TextField fx:id="inputPathField" styleClass="path-field"
+                                   promptText="Select directory..." HBox.hgrow="ALWAYS" />
+                        <Button text="..." styleClass="browse-btn" onAction="#onBrowseInput"
+                                fx:id="browseInputBtn" />
+                    </HBox>
+                </VBox>
             </VBox>
 
-            <!-- File tree -->
-            <Label text="FILES" styleClass="section-label" style="-fx-padding: 12 12 4 12;" />
-            <TreeView fx:id="fileTreeView" styleClass="file-tree" VBox.vgrow="ALWAYS" />
-
-            <!-- Output directory picker -->
-            <VBox styleClass="control-section" spacing="6">
-                <Label text="OUTPUT DIRECTORY" styleClass="section-label" />
-                <HBox spacing="6">
-                    <TextField fx:id="outputPathField" styleClass="path-field"
-                               promptText="Auto-generated..." HBox.hgrow="ALWAYS" />
-                    <Button text="..." styleClass="browse-btn" onAction="#onBrowseOutput"
-                            fx:id="browseOutputBtn" />
-                </HBox>
+            <!-- File tree (Standalone content pane) -->
+            <VBox styleClass="tree-section-outer" VBox.vgrow="ALWAYS">
+                <VBox styleClass="tree-section" VBox.vgrow="ALWAYS" spacing="4">
+                    <Label text="TARGET FILES" styleClass="section-label" />
+                    <TreeView fx:id="fileTreeView" styleClass="file-tree" VBox.vgrow="ALWAYS" />
+                </VBox>
             </VBox>
 
-            <!-- Strategy checkboxes -->
-            <VBox styleClass="control-section" spacing="8">
-                <Label text="STRATEGIES" styleClass="section-label" />
-                <CheckBox fx:id="cbEntropy"    text="Variable Entropy Scrambling" styleClass="strategy-cb" selected="true" />
-                <CheckBox fx:id="cbDeadCode"   text="Dead Code Injection"          styleClass="strategy-cb" selected="true" />
-                <CheckBox fx:id="cbComments"   text="Comment Poisoning"            styleClass="strategy-cb" selected="true" />
-                <CheckBox fx:id="cbStrings"    text="String Literal Encoding"      styleClass="strategy-cb" selected="true" />
-                <CheckBox fx:id="cbWhitespace" text="Whitespace Disruption"        styleClass="strategy-cb" selected="true" />
-                <CheckBox fx:id="cbSemantic"   text="Semantic Inversion"           styleClass="strategy-cb" selected="false" />
-                <CheckBox fx:id="cbControlFlow" text="Control Flow Flattening"      styleClass="strategy-cb" selected="false" />
-                <CheckBox fx:id="cbWatermark"  text="Watermark Encoding"           styleClass="strategy-cb" selected="false" />
+            <!-- Output directory picker (Double-Bezel) -->
+            <VBox styleClass="control-section-outer">
+                <VBox styleClass="control-section" spacing="6">
+                    <Label text="OUTPUT DIRECTORY" styleClass="section-label" />
+                    <HBox spacing="6" alignment="CENTER_LEFT">
+                        <TextField fx:id="outputPathField" styleClass="path-field"
+                                   promptText="Auto-generated..." HBox.hgrow="ALWAYS" />
+                        <Button text="..." styleClass="browse-btn" onAction="#onBrowseOutput"
+                                fx:id="browseOutputBtn" />
+                    </HBox>
+                </VBox>
             </VBox>
 
-            <!-- Progress + Run button -->
-            <VBox styleClass="control-section" spacing="8">
-                <ProgressBar fx:id="progressBar" styleClass="entropy-bar" maxWidth="Infinity" progress="0" />
-                <Label fx:id="entropyLabel" text="Entropy: 0.000" styleClass="entropy-label" />
-                <Button fx:id="runBtn" text="⚡  RUN NIGHTSHADE"
-                        styleClass="run-btn" maxWidth="Infinity"
-                        onAction="#onRunClicked" />
+            <!-- Strategy checkboxes (Double-Bezel) -->
+            <VBox styleClass="control-section-outer">
+                <VBox styleClass="control-section" spacing="8">
+                    <Label text="OBFUSCATION STRATEGIES" styleClass="section-label" />
+                    <CheckBox fx:id="cbEntropy"    text="Variable Entropy Scrambling" styleClass="strategy-cb" selected="true" />
+                    <CheckBox fx:id="cbDeadCode"   text="Dead Code Injection"          styleClass="strategy-cb" selected="true" />
+                    <CheckBox fx:id="cbComments"   text="Comment Poisoning"            styleClass="strategy-cb" selected="true" />
+                    <CheckBox fx:id="cbStrings"    text="String Literal Encoding"      styleClass="strategy-cb" selected="true" />
+                    <CheckBox fx:id="cbWhitespace" text="Whitespace Disruption"        styleClass="strategy-cb" selected="true" />
+                    <CheckBox fx:id="cbSemantic"   text="Semantic Inversion"           styleClass="strategy-cb" selected="false" />
+                    <CheckBox fx:id="cbControlFlow" text="Control Flow Flattening"      styleClass="strategy-cb" selected="false" />
+                    <CheckBox fx:id="cbWatermark"  text="Watermark Encoding"           styleClass="strategy-cb" selected="false" />
+                </VBox>
+            </VBox>
+
+            <!-- Run Control / Action Center (Double-Bezel) -->
+            <VBox styleClass="control-section-outer">
+                <VBox styleClass="control-section" spacing="8">
+                    <ProgressBar fx:id="progressBar" styleClass="entropy-bar" maxWidth="Infinity" progress="0" />
+                    <Label fx:id="entropyLabel" text="Entropy Level: 0.000" styleClass="entropy-label" />
+                    <!-- Button-in-Button layout -->
+                    <Button fx:id="runBtn" styleClass="run-btn" maxWidth="Infinity" onAction="#onRunClicked">
+                        <graphic>
+                            <HBox alignment="CENTER" spacing="10" mouseTransparent="true">
+                                <Label fx:id="runBtnIcon" text="⚡" styleClass="run-btn-icon-wrapper" />
+                                <Label fx:id="runBtnText" text="RUN NIGHTSHADE" styleClass="run-btn-text" />
+                            </HBox>
+                        </graphic>
+                    </Button>
+                </VBox>
             </VBox>
 
         </VBox>
     </left>
 
-    <!-- ── CENTER: Before/After Diff View ─────────────────────────────── -->
+    <!-- ── CENTER: Diff Editor Panel ──────────────────────────────────── -->
     <center>
         <VBox styleClass="center-panel">
 
-            <!-- Diff view header -->
+            <!-- Diff headers -->
             <HBox styleClass="diff-header" spacing="0">
                 <Label text="ORIGINAL SOURCE" styleClass="diff-label-left" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
                 <Label text="POISONED OUTPUT" styleClass="diff-label-right" HBox.hgrow="ALWAYS" maxWidth="Infinity" />
             </HBox>
 
-            <!-- Synchronized split view -->
+            <!-- Synchronized split code editors -->
             <SplitPane fx:id="diffSplitPane" VBox.vgrow="ALWAYS" dividerPositions="0.5">
-                <ScrollPane fx:id="leftScroll" styleClass="code-scroll" fitToWidth="true">
-                    <TextArea fx:id="sourceView" styleClass="code-view source-view"
-                              editable="false" wrapText="false"
-                              promptText="Select a file to preview..." />
-                </ScrollPane>
-                <ScrollPane fx:id="rightScroll" styleClass="code-scroll" fitToWidth="true">
-                    <TextArea fx:id="poisonedView" styleClass="code-view poisoned-view"
-                              editable="false" wrapText="false"
-                              promptText="Run Nightshade to see poisoned output..." />
-                </ScrollPane>
+                <TextArea fx:id="sourceView" styleClass="code-view source-view"
+                          editable="false" wrapText="false"
+                          promptText="Select a target file to preview..." />
+                <TextArea fx:id="poisonedView" styleClass="code-view poisoned-view"
+                          editable="false" wrapText="false"
+                          promptText="Click RUN NIGHTSHADE to view poisoned output..." />
             </SplitPane>
         </VBox>
     </center>
 
-    <!-- ── BOTTOM: Log + Stats ─────────────────────────────────────────── -->
+    <!-- ── BOTTOM: Console Logs & Dashboard Metrics ───────────────────── -->
     <bottom>
         <VBox styleClass="bottom-panel">
 
-            <!-- Stats bar (hidden until first run) -->
-            <HBox fx:id="statsBar" styleClass="stats-bar" spacing="24" visible="false" managed="false">
-                <VBox styleClass="stat-item">
-                    <Label text="FILES" styleClass="stat-key" />
-                    <Label fx:id="statFiles" text="0" styleClass="stat-val" />
+            <!-- Stats Bar (Hidden by default, holds metrics cards) -->
+            <HBox fx:id="statsBar" styleClass="stats-bar" spacing="12" visible="false" managed="false" alignment="CENTER_LEFT">
+                <VBox styleClass="stat-item-outer">
+                    <VBox styleClass="stat-item" spacing="1">
+                        <Label text="FILES" styleClass="stat-key" />
+                        <Label fx:id="statFiles" text="0" styleClass="stat-val" />
+                    </VBox>
                 </VBox>
-                <VBox styleClass="stat-item">
-                    <Label text="RENAMED" styleClass="stat-key" />
-                    <Label fx:id="statRenamed" text="0" styleClass="stat-val stat-amber" />
+                <VBox styleClass="stat-item-outer">
+                    <VBox styleClass="stat-item" spacing="1">
+                        <Label text="RENAMED" styleClass="stat-key" />
+                        <Label fx:id="statRenamed" text="0" styleClass="stat-val stat-amber" />
+                    </VBox>
                 </VBox>
-                <VBox styleClass="stat-item">
-                    <Label text="DEAD BLOCKS" styleClass="stat-key" />
-                    <Label fx:id="statDead" text="0" styleClass="stat-val stat-red" />
+                <VBox styleClass="stat-item-outer">
+                    <VBox styleClass="stat-item" spacing="1">
+                        <Label text="DEAD BLOCKS" styleClass="stat-key" />
+                        <Label fx:id="statDead" text="0" styleClass="stat-val stat-red" />
+                    </VBox>
                 </VBox>
-                <VBox styleClass="stat-item">
-                    <Label text="COMMENTS" styleClass="stat-key" />
-                    <Label fx:id="statComments" text="0" styleClass="stat-val stat-purple" />
+                <VBox styleClass="stat-item-outer">
+                    <VBox styleClass="stat-item" spacing="1">
+                        <Label text="COMMENTS" styleClass="stat-key" />
+                        <Label fx:id="statComments" text="0" styleClass="stat-val stat-purple" />
+                    </VBox>
                 </VBox>
-                <VBox styleClass="stat-item">
-                    <Label text="STRINGS" styleClass="stat-key" />
-                    <Label fx:id="statStrings" text="0" styleClass="stat-val stat-blue" />
+                <VBox styleClass="stat-item-outer">
+                    <VBox styleClass="stat-item" spacing="1">
+                        <Label text="STRINGS" styleClass="stat-key" />
+                        <Label fx:id="statStrings" text="0" styleClass="stat-val stat-blue" />
+                    </VBox>
                 </VBox>
-                <VBox styleClass="stat-item">
-                    <Label text="AVG ENTROPY" styleClass="stat-key" />
-                    <Label fx:id="statEntropy" text="0.000" styleClass="stat-val stat-green" />
+                <VBox styleClass="stat-item-outer">
+                    <VBox styleClass="stat-item" spacing="1">
+                        <Label text="AVG ENTROPY" styleClass="stat-key" />
+                        <Label fx:id="statEntropy" text="0.000" styleClass="stat-val stat-green" />
+                    </VBox>
                 </VBox>
-                <VBox styleClass="stat-item">
-                    <Label text="TIME" styleClass="stat-key" />
-                    <Label fx:id="statTime" text="0ms" styleClass="stat-val" />
+                <VBox styleClass="stat-item-outer">
+                    <VBox styleClass="stat-item" spacing="1">
+                        <Label text="TIME" styleClass="stat-key" />
+                        <Label fx:id="statTime" text="0ms" styleClass="stat-val" />
+                    </VBox>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS" />
                 <Button text="Open Output" styleClass="open-output-btn"
                         onAction="#onOpenOutput" fx:id="openOutputBtn" />
             </HBox>
 
-            <!-- Log panel -->
-            <HBox styleClass="log-header" spacing="8">
-                <Label text="LOG" styleClass="section-label" />
-                <Region HBox.hgrow="ALWAYS" />
-                <Button text="Clear" styleClass="log-clear-btn" onAction="#onClearLog" />
-            </HBox>
-            <ListView fx:id="logView" styleClass="log-view" prefHeight="140" />
+            <!-- Console Log Panel -->
+            <VBox styleClass="log-panel-outer">
+                <VBox styleClass="log-panel">
+                    <HBox styleClass="log-header" spacing="8" alignment="CENTER_LEFT">
+                        <Label text="SYSTEM LOG" styleClass="section-label" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button text="CLEAR" styleClass="log-clear-btn" onAction="#onClearLog" />
+                    </HBox>
+                    <ListView fx:id="logView" styleClass="log-view" prefHeight="130" />
+                </VBox>
+            </VBox>
 
         </VBox>
     </bottom>

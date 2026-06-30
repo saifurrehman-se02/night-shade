@@ -114,7 +114,10 @@ public class SymbolTable {
         if (token.length() > 1 && token.equals(token.toUpperCase()) && !token.contains("_")) {
             return false; // e.g. MAX, MIN â€” often constants or enums from stdlib
         }
-        // Protect Java convention: Class/Type names start with uppercase
+        // Protect Java convention: Class/Type names start with uppercase.
+        // Renaming a class identifier would break compilation because the
+        // filename must match the public class name. Without file-renaming
+        // support, we must protect all PascalCase identifiers.
         if (Character.isUpperCase(token.charAt(0))) return false;
         return true;
     }

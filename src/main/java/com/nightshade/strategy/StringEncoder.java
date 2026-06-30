@@ -80,6 +80,36 @@ public class StringEncoder implements PoisonStrategy {
         return result;
     }
 
+    private String unescape(String input) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        while (i < input.length()) {
+            char c = input.charAt(i);
+            if (c == '\\' && i + 1 < input.length()) {
+                char next = input.charAt(i + 1);
+                switch (next) {
+                    case 'n'  -> sb.append('\n');
+                    case 't'  -> sb.append('\t');
+                    case 'r'  -> sb.append('\r');
+                    case 'b'  -> sb.append('\b');
+                    case 'f'  -> sb.append('\f');
+                    case '"'  -> sb.append('"');
+                    case '\'' -> sb.append('\'');
+                    case '\\' -> sb.append('\\');
+                    default   -> {
+                        sb.append(c);
+                        sb.append(next);
+                    }
+                }
+                i += 2;
+            } else {
+                sb.append(c);
+                i++;
+            }
+        }
+        return sb.toString();
+    }
+
     private String encodeLine(String line, String ext) {
         StringBuffer sb = new StringBuffer();
         Pattern pat = ext.equals(".py") ? PY_STRING : JAVA_STRING;
@@ -87,9 +117,10 @@ public class StringEncoder implements PoisonStrategy {
 
         while (m.find()) {
             String content = m.group(1);
+            String unescaped = unescape(content);
             // Only encode reasonably short strings (< 80 chars) to keep lines readable
-            if (content.length() > 0 && content.length() < 80) {
-                String encoded = ext.equals(".py") ? encodePython(content) : encodeJava(content);
+            if (unescaped.length() > 0 && unescaped.length() < 80) {
+                String encoded = ext.equals(".py") ? encodePython(unescaped) : encodeJava(unescaped);
                 m.appendReplacement(sb, Matcher.quoteReplacement(encoded));
             } else {
                 m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));

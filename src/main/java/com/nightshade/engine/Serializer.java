@@ -66,11 +66,26 @@ public class Serializer {
         List<String> result = new ArrayList<>();
         boolean skipping = false;
         Lexer lexer = new Lexer();
+
+        int braceDepth = 0;
+        String currentClassName = "Unknown";
+        String currentMethodName = null;
+        boolean inMethod = false;
+        int methodStartDepth = 0;
+
         for (String line : source.getObfuscatedLines()) {
             String trimmed = line.trim();
             
-            if (trimmed.contains("@nightshade:skip")) skipping = true;
-            if (trimmed.contains("@nightshade:resume")) skipping = false;
+            if (trimmed.contains("@nightshade:skip")) {
+                skipping = true;
+                result.add(line);
+                continue;
+            }
+            if (trimmed.contains("@nightshade:resume")) {
+                skipping = false;
+                result.add(line);
+                continue;
+            }
 
             // Skip renaming on package, import, or skipped lines
             if (skipping || trimmed.startsWith("package ") || trimmed.startsWith("import ")) {
@@ -82,12 +97,69 @@ public class Serializer {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < tokens.size(); i++) {
                 Token token = tokens.get(i);
+
+                // --- SCOPE TRACKING ---
+                if (token.getType() == TokenType.KEYWORD &&
+                    (token.getValue().equals("class") || token.getValue().equals("interface") ||
+                     token.getValue().equals("enum") || token.getValue().equals("record"))) {
+                    for (int j = i + 1; j < tokens.size(); j++) {
+                        if (tokens.get(j).getType() == TokenType.IDENTIFIER) {
+                            currentClassName = tokens.get(j).getValue();
+                            break;
+                        }
+                    }
+                }
+
+                if (braceDepth == 1 && token.getType() == TokenType.IDENTIFIER && i + 1 < tokens.size()) {
+                    boolean looksLikeMethod = false;
+                    for (int j = i + 1; j < Math.min(i + 10, tokens.size()); j++) {
+                        Token peek = tokens.get(j);
+                        if (peek.getType() == TokenType.WHITESPACE) continue;
+                        if (peek.getType() == TokenType.SYMBOL && peek.getValue().equals("(")) {
+                            looksLikeMethod = true;
+                        }
+                        break;
+                    }
+                    if (looksLikeMethod && !inMethod) {
+                        currentMethodName = token.getValue();
+                    }
+                }
+
+                if (token.getType() == TokenType.SYMBOL) {
+                    if (token.getValue().equals("{")) {
+                        braceDepth++;
+                        if (currentMethodName != null && !inMethod && braceDepth == 2) {
+                            inMethod = true;
+                            methodStartDepth = braceDepth;
+                        }
+                    } else if (token.getValue().equals("}")) {
+                        braceDepth = Math.max(0, braceDepth - 1);
+                        if (inMethod && braceDepth < methodStartDepth) {
+                            inMethod = false;
+                            currentMethodName = null;
+                        }
+                    }
+                }
+                // ----------------------
+
                 Token prevToken = previousNonWhitespace(tokens, i);
                 boolean isDotCall = prevToken != null
                     && ".".equals(prevToken.getValue())
                     && token.getType() == TokenType.IDENTIFIER;
-                if (token.getType() == TokenType.IDENTIFIER && !isDotCall) {
+
+                // Allow renaming identifiers after this./super. (field access, not method call)
+                boolean isThisDot = false;
+                if (isDotCall) {
+                    Token beforeDot = previousNonWhitespace(tokens, i - 1);
+                    isThisDot = beforeDot != null && (beforeDot.getValue().equals("this") || beforeDot.getValue().equals("super"));
+                }
+
+                if (token.getType() == TokenType.IDENTIFIER && (!isDotCall || isThisDot)) {
                     String replacement = mapping.get(token.getValue());
+                    if (replacement == null) {
+                        replacement = mapping.get("global::" + token.getValue());
+                    }
+
                     if (replacement != null) {
                         sb.append(replacement);
                     } else {

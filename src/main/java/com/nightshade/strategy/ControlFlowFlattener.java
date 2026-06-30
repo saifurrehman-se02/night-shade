@@ -14,9 +14,10 @@ public class ControlFlowFlattener implements PoisonStrategy {
     @Override public boolean isEnabled()       { return enabled; }
     @Override public void setEnabled(boolean e){ this.enabled = e; }
 
-    // Detects private method declarations
+    // Detects private/package-private method declarations with optional annotations,
+    // generics, and varied modifiers
     private static final Pattern PRIVATE_METHOD = Pattern.compile(
-        "^(\\s*)(private\\s+\\w+\\s+(\\w+)\\s*\\([^)]*\\))\\s*\\{\\s*$");
+        "^(\\s*)((?:private|protected)?\\s*(?:static\\s+)?(?:final\\s+)?(?:<[^>]++>\\s+)?\\w+(?:<[^>]++)?\\s+(\\w+)\\s*\\([^)]*\\))\\s*\\{\\s*$");
 
     @Override
     public ObfuscationResult apply(SourceFile source, ASTNode ast, SymbolTable symbols) {
@@ -24,19 +25,29 @@ public class ControlFlowFlattener implements PoisonStrategy {
         int flattenedCount = 0;
         int totalMethods = 0;
 
+        boolean skipping = false;
         // Find private methods and flatten them
         for (int i = 0; i < lines.size(); i++) {
-            Matcher m = PRIVATE_METHOD.matcher(lines.get(i));
+            String line = lines.get(i);
+            String trimmed = line.trim();
+            if (trimmed.contains("@nightshade:skip")) skipping = true;
+            if (trimmed.contains("@nightshade:resume")) skipping = false;
+
+            if (skipping) continue;
+
+            Matcher m = PRIVATE_METHOD.matcher(line);
             if (!m.matches()) continue;
             totalMethods++;
 
             String indent = m.group(1);
+            String ext = source.getExtension();
             // Find the closing brace of this method
             int braceDepth = 1;
             int bodyStart = i + 1;
             int bodyEnd = -1;
             for (int j = bodyStart; j < lines.size(); j++) {
-                for (char c : lines.get(j).toCharArray()) {
+                String cleanLine = stripCommentsAndStrings(lines.get(j), ext);
+                for (char c : cleanLine.toCharArray()) {
                     if (c == '{') braceDepth++;
                     if (c == '}') braceDepth--;
                 }
@@ -44,20 +55,47 @@ public class ControlFlowFlattener implements PoisonStrategy {
             }
             if (bodyEnd == -1 || bodyEnd - bodyStart < 3) continue;
 
-            // Extract body statements (skip blank lines)
+            // Extract body statements and validate safety
             List<String> bodyStatements = new ArrayList<>();
             String returnStatement = null;
+            boolean hasMultipleReturns = false;
+            boolean hasComplexStructures = false;
+            int innerBraceDepth = 0;
+
             for (int j = bodyStart; j < bodyEnd; j++) {
-                String trimmed = lines.get(j).trim();
-                if (trimmed.isEmpty()) continue;
-                if (trimmed.startsWith("return ")) {
-                    returnStatement = trimmed;
+                String bodyLine = lines.get(j);
+                String bodyTrimmed = bodyLine.trim();
+                if (bodyTrimmed.isEmpty()) continue;
+
+                // Track nested braces to avoid splitting control blocks
+                for (char c : bodyLine.toCharArray()) {
+                    if (c == '{') innerBraceDepth++;
+                    if (c == '}') innerBraceDepth--;
+                }
+
+                if (bodyTrimmed.contains("if ") || bodyTrimmed.contains("if(") ||
+                    bodyTrimmed.contains("for ") || bodyTrimmed.contains("for(") ||
+                    bodyTrimmed.contains("while ") || bodyTrimmed.contains("while(") ||
+                    bodyTrimmed.contains("switch ") || bodyTrimmed.contains("switch(") ||
+                    bodyTrimmed.contains("try ") || bodyTrimmed.contains("try{") ||
+                    bodyTrimmed.contains("catch ") || bodyTrimmed.contains("catch(") ||
+                    bodyTrimmed.contains("finally")) {
+                    hasComplexStructures = true;
+                }
+
+                if (bodyTrimmed.startsWith("return ")) {
+                    if (returnStatement != null) {
+                        hasMultipleReturns = true;
+                    }
+                    returnStatement = bodyTrimmed;
                 } else {
-                    bodyStatements.add(trimmed);
+                    bodyStatements.add(bodyTrimmed);
                 }
             }
             
-            if (bodyStatements.size() < 2) continue; // not worth flattening
+            if (innerBraceDepth != 0 || hasMultipleReturns || hasComplexStructures || bodyStatements.size() < 2) {
+                continue; // Skip: unsafe to flatten
+            }
 
             String stateVar = "_ns_state";
             
@@ -98,5 +136,20 @@ public class ControlFlowFlattener implements PoisonStrategy {
         ObfuscationResult result = new ObfuscationResult(source, modified, 0.0);
         result.setTotalMethods(Math.max(1, totalMethods));
         return result;
+    }
+
+    private String stripCommentsAndStrings(String line, String ext) {
+        String clean = line;
+        if (ext.equals(".py")) {
+            clean = clean.replaceAll("'(?:[^'\\\\]|\\\\.)*'", "");
+            clean = clean.replaceAll("\"(?:[^\"\\\\]|\\\\.)*\"", "");
+            int hashIdx = clean.indexOf('#');
+            if (hashIdx >= 0) clean = clean.substring(0, hashIdx);
+        } else {
+            clean = clean.replaceAll("\"(?:[^\"\\\\]|\\\\.)*\"", "");
+            int commentIdx = clean.indexOf("//");
+            if (commentIdx >= 0) clean = clean.substring(0, commentIdx);
+        }
+        return clean;
     }
 }

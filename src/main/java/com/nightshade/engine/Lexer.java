@@ -23,15 +23,15 @@ public class Lexer {
     // ── Master Pattern (DOTALL for multi-line block comments) ───────────────
 
     private static final String PATTERN_STRING =
-        "(?<COMMENT>//[^\n]*|/\\*.*?\\*/|#[^\n]*)"                           // Java/JS // and /* */, Python #
-        + "|(?<STRING>\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'|`[^`]*`)" // double/single/backtick strings
+        "(?<COMMENT>//[^\n]*|/\\*[^*]*(?:\\*+[^*/][^*]*)*\\*+/|#[^\n]*)"       // Java/JS // and /* */, Python #
+        + "|(?<STRING>\"\"\"[\\s\\S]*?\"\"\"|\"\"[\\s\\S]*?\"\"|\"\"\"[\\s\\S]*?\"\"\"|'(?:[^'\\\\]|\\\\.)*'|\"(?:[^\"\\\\]|\\\\.)*\"|`[^`]*`)" // triple-quoted (Python) and standard strings
         + "|(?<NUMBER>\\b\\d+\\.?\\d*(?:[eE][+-]?\\d+)?[lLfFdD]?\\b)"       // numeric literals
         + "|(?<IDENTIFIER>[a-zA-Z_$][a-zA-Z0-9_$]*)"                         // identifiers (classified post-match)
         + "|(?<SYMBOL>[{}()\\[\\];,.<>!=+\\-*/%&|^~?:@])"                    // symbols + @ for annotations
         + "|(?<WHITESPACE>[ \\t]+|\\r?\\n)";                                  // spaces, tabs, newlines
 
     private static final Pattern MASTER_PATTERN =
-        Pattern.compile(PATTERN_STRING, Pattern.DOTALL);
+        Pattern.compile(PATTERN_STRING);
 
     // ── Java reserved words + common stdlib types (must NOT be renamed) ─────
 

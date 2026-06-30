@@ -22,6 +22,15 @@ public class WatermarkEncoder implements PoisonStrategy {
     public ObfuscationResult apply(SourceFile source, ASTNode ast, SymbolTable symbols) {
         List<String> lines = new ArrayList<>(source.getObfuscatedLines());
         
+        // Skip Python files to prevent mixed tab/space indentation (TabError)
+        if (source.getExtension().equals(".py")) {
+            SourceFile modified = new SourceFile(source.getAbsolutePath(), source.getRawLines());
+            modified.setObfuscatedLines(lines);
+            ObfuscationResult result = new ObfuscationResult(source, modified, 0.0);
+            result.setWhitespaceChanges(0);
+            return result;
+        }
+        
         // Generate watermark bits from author + salt + timestamp
         String payload = authorId + "|" + symbols.getSessionSalt() + "|" + System.currentTimeMillis();
         byte[] hash = sha256(payload);
@@ -30,22 +39,32 @@ public class WatermarkEncoder implements PoisonStrategy {
         int bitIndex = 0;
         int embedded = 0;
         
+        boolean skipping = false;
         for (int i = 0; i < lines.size() && bitIndex < bits.length; i++) {
             String line = lines.get(i);
             String trimmed = line.trim();
             
+            if (trimmed.contains("@nightshade:skip")) skipping = true;
+            if (trimmed.contains("@nightshade:resume")) skipping = false;
+
+            if (skipping) continue;
+
             // Skip blank lines and lines with no indentation
             if (trimmed.isEmpty()) continue;
             int leadingSpaces = line.length() - line.stripLeading().length();
             if (leadingSpaces < 2) continue;
             
             // Encode one bit per eligible line:
-            // bit=0 → use spaces for indent (no change)
-            // bit=1 → add one invisible Unicode zero-width space after indent
+            // bit=0 → use normal indent (2 spaces per indentation unit)
+            // bit=1 → use tab character for the first indent unit (invisible but compilable)
             if (bits[bitIndex]) {
-                // Insert a zero-width space (U+200B) after the indent
-                lines.set(i, line.substring(0, leadingSpaces) + "\u200B" + trimmed);
-                embedded++;
+                // Use first indentation level as tab instead of spaces
+                // Preserves total indentation depth to avoid breaking compilation
+                if (leadingSpaces >= 2) {
+                    int indentLevels = leadingSpaces / 2;
+                    lines.set(i, "\t" + "  ".repeat(indentLevels - 1) + line.substring(leadingSpaces));
+                    embedded++;
+                }
             }
             bitIndex++;
         }

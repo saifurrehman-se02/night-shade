@@ -81,7 +81,17 @@ public class WhitespaceDisruptor implements PoisonStrategy {
 
     private List<String> toAllmanStyle(List<String> lines) {
         List<String> out = new ArrayList<>();
+        boolean skipping = false;
         for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.contains("@nightshade:skip")) skipping = true;
+            if (trimmed.contains("@nightshade:resume")) skipping = false;
+
+            if (skipping) {
+                out.add(line);
+                continue;
+            }
+
             // If line ends with { preceded by code (K&R style), split into two lines
             Matcher m = KR_OPEN.matcher(line);
             if (m.matches()) {

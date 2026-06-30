@@ -18,6 +18,8 @@ public class SourceFile {
     private List<String> obfuscatedLines;   // set by engine after processing
 
     public SourceFile(String absolutePath, List<String> rawLines) {
+        if (absolutePath == null) throw new IllegalArgumentException("absolutePath must not be null");
+        if (rawLines == null) throw new IllegalArgumentException("rawLines must not be null");
         this.absolutePath = absolutePath;
         this.rawLines = Collections.unmodifiableList(new ArrayList<>(rawLines));
         this.obfuscatedLines = new ArrayList<>(rawLines); // default: unchanged

@@ -24,6 +24,7 @@ import com.nightshade.util.LogService;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,6 +79,7 @@ public class CLI {
         boolean verify = false;
         boolean generateReport = false;
         boolean listStrategies = false;
+        boolean libraryMode = false;
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -91,6 +93,7 @@ public class CLI {
                     case "--quiet", "-q"       -> logLevel = LogLevel.QUIET;
                     case "--dry-run"           -> dryRun = true;
                     case "--verify"            -> verify = true;
+                    case "--library-mode"     -> libraryMode = true;
                     case "--report", "-r"      -> generateReport = true;
                     case "--version"           -> { System.out.println("Nightshade v3.5.0"); return; }
                     case "--help", "-h"        -> { printHelp(); return; }
@@ -106,7 +109,7 @@ public class CLI {
             }
         }
 
-        if (entropyThreshold < 0.0 || entropyThreshold > 1.0) {
+        if (Double.isNaN(entropyThreshold) || entropyThreshold < 0.0 || entropyThreshold > 1.0) {
             logError("[ERROR] Entropy threshold must be between 0.0 and 1.0", logLevel);
             System.exit(1);
         }
@@ -154,6 +157,9 @@ public class CLI {
         }
         logInfo("Strategies enabled: " + enabledCount + "/" + strategies.size(), logLevel);
         logInfo("Entropy threshold: " + entropyThreshold, logLevel);
+        if (libraryMode) {
+            logInfo("Library mode: ENABLED (preserving public APIs)", logLevel);
+        }
         logInfo("", logLevel);
 
         LogService logService = new LogService(logLevel == LogLevel.VERBOSE);
@@ -161,7 +167,7 @@ public class CLI {
         Parser parser = new Parser();
         Serializer serializer = new Serializer();
         EntropyCalculator entropyCalc = new EntropyCalculator();
-        ObfuscationEngine engine = new ObfuscationEngine(strategies, lexer, parser, serializer, entropyCalc, logService, entropyThreshold);
+        ObfuscationEngine engine = new ObfuscationEngine(strategies, lexer, parser, serializer, entropyCalc, logService, entropyThreshold, libraryMode);
         FileUtil fileUtil = new FileUtil();
 
         try {
@@ -188,7 +194,8 @@ public class CLI {
                         idx + 1, totalFiles, ((idx + 1) * 100 / totalFiles)), logLevel);
                 } else if (logLevel == LogLevel.NORMAL && totalFiles > 10) {
                     int percent = (idx + 1) * 100 / totalFiles;
-                    if (percent % 25 == 0 && ((idx + 1) / (totalFiles / 4)) > ((idx) / (totalFiles / 4))) {
+                    int quarter = Math.max(1, totalFiles / 4);
+                    if (percent % 25 == 0 && ((idx + 1) / quarter) > (idx / quarter)) {
                         logInfo(String.format("Progress: %d/%d (%d%%)...", idx + 1, totalFiles, percent), logLevel);
                     }
                 }
@@ -319,7 +326,7 @@ public class CLI {
             }
         }
         
-        if (arg.contains("all")) {
+        if (arg.equals("all") || Arrays.asList(arg.split(",")).contains("all")) {
             list.clear();
             list.add(new EntropyScrambler());
             list.add(new DeadCodeInjector());
@@ -329,6 +336,9 @@ public class CLI {
             list.add(new SemanticInverter());
             list.add(new ControlFlowFlattener());
             list.add(new WatermarkEncoder());
+            for (PoisonStrategy s : list) {
+                s.setEnabled(true);
+            }
         }
         
         return list;
@@ -387,6 +397,7 @@ public class CLI {
         System.out.println("  --threshold, -t <num>   Early-exit entropy threshold [0.0 - 1.0] (default: 0.65)");
         System.out.println("  --dry-run               Process and report without writing output files");
         System.out.println("  --verify                Run post-obfuscation compilation verification");
+        System.out.println("  --library-mode          Preserve public APIs while obfuscating internals");
         System.out.println("  --report, -r            Generate markdown report (nightshade_report.md)");
         System.out.println("  --verbose, -v           Show detailed processing logs");
         System.out.println("  --quiet, -q             Only show errors and final summary");

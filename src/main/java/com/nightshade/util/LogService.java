@@ -55,7 +55,13 @@ public class LogService {
     }
 
     public void clear() {
-        runOnFxThread(entries::clear);
+        if (Platform.isFxApplicationThread()) {
+            entries.clear();
+        } else {
+            runOnFxThread(() -> {
+                entries.clear();
+            });
+        }
     }
 
     // ── Internal ─────────────────────────────────────────────────────────────

@@ -51,7 +51,7 @@ public class SemanticInverter implements PoisonStrategy {
 
             String original = t.getValue();
             // Generate deterministic but misleading replacement
-            int hash = Math.abs((source.getAbsolutePath() + "::" + original).hashCode());
+            int hash = (source.getAbsolutePath() + "::" + original).hashCode() & Integer.MAX_VALUE;
             String replacement = MISLEADING_TERMS[hash % MISLEADING_TERMS.length] + "_" + (hash % 1000);
 
             lineMapping.put(original, replacement);
