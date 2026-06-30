@@ -9,6 +9,9 @@
     - Double-Bezel nested panel architecture for all controls
     - Button-in-Button interactive controls
     - Symmetric spacing and clean high-density developer styling
+    
+  Layout fix: Strategy checkboxes moved to 2-column GridPane to halve their
+  vertical footprint and give the file tree enough space to display.
 -->
 <BorderPane xmlns="http://javafx.openjfx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml"
@@ -34,7 +37,7 @@
 
             <!-- Input directory picker (Double-Bezel) -->
             <VBox styleClass="control-section-outer">
-                <VBox styleClass="control-section" spacing="6">
+                <VBox styleClass="control-section" spacing="4">
                     <Label text="INPUT DIRECTORY" styleClass="section-label" />
                     <HBox spacing="6" alignment="CENTER_LEFT">
                         <TextField fx:id="inputPathField" styleClass="path-field"
@@ -45,17 +48,18 @@
                 </VBox>
             </VBox>
 
-            <!-- File tree (Standalone content pane) -->
-            <VBox styleClass="tree-section-outer" VBox.vgrow="ALWAYS">
-                <VBox styleClass="tree-section" VBox.vgrow="ALWAYS" spacing="4">
+            <!-- File tree (Standalone content pane) — gets all remaining space -->
+            <VBox styleClass="tree-section-outer" VBox.vgrow="ALWAYS" minHeight="150">
+                <VBox styleClass="tree-section" VBox.vgrow="ALWAYS" spacing="4" minHeight="140">
                     <Label text="TARGET FILES" styleClass="section-label" />
-                    <TreeView fx:id="fileTreeView" styleClass="file-tree" VBox.vgrow="ALWAYS" />
+                    <TreeView fx:id="fileTreeView" styleClass="file-tree"
+                              VBox.vgrow="ALWAYS" minHeight="120" />
                 </VBox>
             </VBox>
 
             <!-- Output directory picker (Double-Bezel) -->
             <VBox styleClass="control-section-outer">
-                <VBox styleClass="control-section" spacing="6">
+                <VBox styleClass="control-section" spacing="4">
                     <Label text="OUTPUT DIRECTORY" styleClass="section-label" />
                     <HBox spacing="6" alignment="CENTER_LEFT">
                         <TextField fx:id="outputPathField" styleClass="path-field"
@@ -66,24 +70,30 @@
                 </VBox>
             </VBox>
 
-            <!-- Strategy checkboxes (Double-Bezel) -->
+            <!-- Strategy checkboxes — 2-column GridPane to halve vertical footprint -->
             <VBox styleClass="control-section-outer">
-                <VBox styleClass="control-section" spacing="8">
+                <VBox styleClass="control-section" spacing="4">
                     <Label text="OBFUSCATION STRATEGIES" styleClass="section-label" />
-                    <CheckBox fx:id="cbEntropy"    text="Variable Entropy Scrambling" styleClass="strategy-cb" selected="true" />
-                    <CheckBox fx:id="cbDeadCode"   text="Dead Code Injection"          styleClass="strategy-cb" selected="true" />
-                    <CheckBox fx:id="cbComments"   text="Comment Poisoning"            styleClass="strategy-cb" selected="true" />
-                    <CheckBox fx:id="cbStrings"    text="String Literal Encoding"      styleClass="strategy-cb" selected="true" />
-                    <CheckBox fx:id="cbWhitespace" text="Whitespace Disruption"        styleClass="strategy-cb" selected="true" />
-                    <CheckBox fx:id="cbSemantic"   text="Semantic Inversion"           styleClass="strategy-cb" selected="false" />
-                    <CheckBox fx:id="cbControlFlow" text="Control Flow Flattening"      styleClass="strategy-cb" selected="false" />
-                    <CheckBox fx:id="cbWatermark"  text="Watermark Encoding"           styleClass="strategy-cb" selected="false" />
+                    <GridPane hgap="6" vgap="4">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
+                            <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
+                        </columnConstraints>
+                        <CheckBox fx:id="cbEntropy"    text="Entropy Scramble" styleClass="strategy-cb" selected="true"  GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <CheckBox fx:id="cbDeadCode"   text="Dead Code"        styleClass="strategy-cb" selected="true"  GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <CheckBox fx:id="cbComments"   text="Comment Poison"   styleClass="strategy-cb" selected="true"  GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                        <CheckBox fx:id="cbStrings"    text="String Encode"    styleClass="strategy-cb" selected="true"  GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <CheckBox fx:id="cbWhitespace" text="Whitespace Disrupt" styleClass="strategy-cb" selected="true" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                        <CheckBox fx:id="cbSemantic"   text="Semantic Invert"  styleClass="strategy-cb" selected="false" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <CheckBox fx:id="cbControlFlow" text="Control Flow"    styleClass="strategy-cb" selected="false" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                        <CheckBox fx:id="cbWatermark"  text="Watermark"        styleClass="strategy-cb" selected="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                    </GridPane>
                 </VBox>
             </VBox>
 
             <!-- Run Control / Action Center (Double-Bezel) -->
             <VBox styleClass="control-section-outer">
-                <VBox styleClass="control-section" spacing="8">
+                <VBox styleClass="control-section" spacing="6">
                     <ProgressBar fx:id="progressBar" styleClass="entropy-bar" maxWidth="Infinity" progress="0" />
                     <Label fx:id="entropyLabel" text="Entropy Level: 0.000" styleClass="entropy-label" />
                     <!-- Button-in-Button layout -->
@@ -184,7 +194,7 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <Button text="CLEAR" styleClass="log-clear-btn" onAction="#onClearLog" />
                     </HBox>
-                    <ListView fx:id="logView" styleClass="log-view" prefHeight="130" />
+                    <ListView fx:id="logView" styleClass="log-view" prefHeight="110" />
                 </VBox>
             </VBox>
 

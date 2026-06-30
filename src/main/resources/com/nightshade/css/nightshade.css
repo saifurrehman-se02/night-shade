@@ -625,3 +625,94 @@
     -fx-background-color: transparent;
     -fx-text-fill: #A5A5B5;
 }
+
+/* ── Dark ScrollBars (fixes white scrollbar artifact) ────────────────────── */
+.scroll-bar {
+    -fx-background-color: #07070B;
+    -fx-border-color: transparent;
+}
+
+.scroll-bar:horizontal,
+.scroll-bar:vertical {
+    -fx-background-color: #0A0A12;
+    -fx-pref-height: 8px;
+    -fx-pref-width: 8px;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #2A2A3E;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #FFA500;
+}
+
+.scroll-bar .thumb:pressed {
+    -fx-background-color: #FF8C00;
+}
+
+.scroll-bar .track {
+    -fx-background-color: #0A0A12;
+    -fx-border-color: transparent;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: #0A0A12;
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane .corner {
+    -fx-background-color: #07070B;
+}
+
+/* ── SplitPane Divider (fixes white dot/line artifact) ───────────────────── */
+.split-pane {
+    -fx-background-color: #07070B;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.split-pane-divider {
+    -fx-background-color: #1A1A26;
+    -fx-padding: 0 1 0 1;
+    -fx-border-color: transparent;
+}
+
+.split-pane-divider .grab-btn {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.split-pane-divider .grab-btn:hover {
+    -fx-background-color: rgba(255, 165, 0, 0.2);
+}
+
+/* ── Tooltip (file name on hover) ────────────────────────────────────────── */
+.tooltip {
+    -fx-background-color: #161622;
+    -fx-border-color: #2F2F45;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #EAEAEF;
+    -fx-font-size: 11px;
+    -fx-padding: 5 10 5 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 8, 0, 0, 2);
+}
