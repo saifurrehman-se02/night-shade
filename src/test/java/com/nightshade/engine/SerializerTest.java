@@ -41,13 +41,11 @@ class SerializerTest {
         List<String> lines = List.of(
             "public class Test {",
             "  void compute(int n) {",
-            "    Test t = new Test();",
-            "    t.compute(10);",
+            "    this.compute(10);",
             "  }",
             "}"
         );
         SourceFile source = new SourceFile("Test.java", lines);
-        // "compute" IS in the mapping — it's our own method
         Map<String, String> mapping = Map.of("compute", "v_xsjumvk");
 
         Serializer serializer = new Serializer();
@@ -56,7 +54,31 @@ class SerializerTest {
 
         assertAll("own method renaming",
             () -> assertTrue(joined.contains("void v_xsjumvk(int n)"), "Method declaration should be renamed"),
-            () -> assertTrue(joined.contains("t.v_xsjumvk(10)"), "Own method call should be renamed")
+            () -> assertTrue(joined.contains("this.v_xsjumvk(10)"), "this.-prefixed method call should be renamed")
+        );
+    }
+
+    @Test
+    void applyMappingSkipsDotCallsOnNonThisObjects() {
+        List<String> lines = List.of(
+            "import java.util.stream.Collectors;",
+            "public class Test {",
+            "  void run() {",
+            "    stream.filter(x -> x > 0).collect(Collectors.toList());",
+            "  }",
+            "}"
+        );
+        SourceFile source = new SourceFile("Test.java", lines);
+        Map<String, String> mapping = Map.of("filter", "v_zzzzzz", "collect", "v_yyyyyy", "toList", "v_xxxxxx");
+
+        Serializer serializer = new Serializer();
+        List<String> out = serializer.applyMapping(source, mapping);
+        String joined = String.join("\n", out);
+
+        assertAll("dot calls on non-this objects are not renamed",
+            () -> assertTrue(joined.contains(".filter("), "Library method filter should not be renamed"),
+            () -> assertTrue(joined.contains(".collect("), "Library method collect should not be renamed"),
+            () -> assertTrue(joined.contains(".toList()"), "Library method toList should not be renamed")
         );
     }
 }

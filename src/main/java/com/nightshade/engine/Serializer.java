@@ -154,10 +154,7 @@ public class Serializer {
                     isThisDot = beforeDot != null && (beforeDot.getValue().equals("this") || beforeDot.getValue().equals("super"));
                 }
 
-                // Check if this identifier is in the mapping (our own method/variable)
-                boolean isInMapping = mapping.containsKey(token.getValue()) || mapping.containsKey("global::" + token.getValue());
-
-                if (token.getType() == TokenType.IDENTIFIER && (!isDotCall || isThisDot || isInMapping)) {
+                if (token.getType() == TokenType.IDENTIFIER && (!isDotCall || isThisDot)) {
                     String replacement = mapping.get(token.getValue());
                     if (replacement == null) {
                         replacement = mapping.get("global::" + token.getValue());

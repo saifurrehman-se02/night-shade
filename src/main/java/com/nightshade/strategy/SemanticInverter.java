@@ -44,11 +44,26 @@ public class SemanticInverter implements PoisonStrategy {
         Set<String> renamedNames = new HashSet<>();
         Set<String> usedReplacements = new HashSet<>();
 
+        // Build set of identifiers that appear as method calls after non-this/super dots.
+        // These must not be renamed to prevent declaration/call mismatches.
+        List<Token> tokens = lexer.tokenize(source.getRawLines());
+        Set<String> dotCallIdents = new HashSet<>();
+        for (int i = 0; i < tokens.size(); i++) {
+            Token t = tokens.get(i);
+            if (t.getType() != TokenType.IDENTIFIER) continue;
+            Token prev = previousNonWhitespace(tokens, i);
+            if (prev == null || !".".equals(prev.getValue())) continue;
+            Token beforeDot = previousNonWhitespace(tokens, i - 1);
+            if (beforeDot != null && ("this".equals(beforeDot.getValue()) || "super".equals(beforeDot.getValue()))) continue;
+            dotCallIdents.add(t.getValue());
+        }
+
         List<ASTNode> identifierNodes = ast.findAll("STATEMENT");
         for (ASTNode node : identifierNodes) {
             Token t = node.getToken();
             if (t == null || t.getType() != TokenType.IDENTIFIER) continue;
             if (!symbols.isUserDefined(t.getValue())) continue;
+            if (dotCallIdents.contains(t.getValue())) continue;
 
             String original = t.getValue();
             // Generate deterministic but misleading replacement
@@ -74,7 +89,6 @@ public class SemanticInverter implements PoisonStrategy {
         result.setRenamedIdentifiers(renamedNames.size());
         // Add total identifiers
         int totalIdents = 0;
-        List<Token> tokens = lexer.tokenize(source.getRawLines());
         for (Token t : tokens) {
             if (t.getType() == TokenType.IDENTIFIER && symbols.isUserDefined(t.getValue())) {
                 totalIdents++;
@@ -83,5 +97,12 @@ public class SemanticInverter implements PoisonStrategy {
         result.setTotalIdentifiers(Math.max(1, totalIdents));
         
         return result;
+    }
+
+    private Token previousNonWhitespace(List<Token> tokens, int index) {
+        for (int j = index - 1; j >= 0; j--) {
+            if (tokens.get(j).getType() != TokenType.WHITESPACE) return tokens.get(j);
+        }
+        return null;
     }
 }
