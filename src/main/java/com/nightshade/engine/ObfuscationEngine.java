@@ -8,6 +8,7 @@ import com.nightshade.strategy.PoisonStrategy;
 import com.nightshade.util.LogService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -78,6 +79,7 @@ public class ObfuscationEngine {
     }
 
     public List<ObfuscationResult> process(List<SourceFile> files, java.util.function.BiConsumer<Integer, Integer> progressCallback) {
+        if (files == null) throw new IllegalArgumentException("files must not be null");
         List<ObfuscationResult> results = new ArrayList<>();
         SymbolTable symbols = new SymbolTable();
 
@@ -139,7 +141,8 @@ public class ObfuscationEngine {
             } catch (Exception e) {
                 logService.logError("Failed to process " + file.getFileName() + ": " + e.getMessage());
                 // Non-fatal — include an unchanged result so file is still written
-                ObfuscationResult unchanged = new ObfuscationResult(file, file, 0.0);
+                SourceFile copy = new SourceFile(file.getAbsolutePath(), file.getRawLines());
+                ObfuscationResult unchanged = new ObfuscationResult(file, copy, 0.0);
                 results.add(unchanged);
             }
 
@@ -218,6 +221,6 @@ public class ObfuscationEngine {
     }
 
     public List<PoisonStrategy> getStrategies() {
-        return strategies;
+        return Collections.unmodifiableList(strategies);
     }
 }

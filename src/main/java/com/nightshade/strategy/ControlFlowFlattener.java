@@ -19,6 +19,9 @@ public class ControlFlowFlattener implements PoisonStrategy {
     private static final Pattern PRIVATE_METHOD = Pattern.compile(
         "^(\\s*)((?:private|protected)?\\s*(?:static\\s+)?(?:final\\s+)?(?:<[^>]++>\\s+)?\\w+(?:<[^>]++)?\\s+(\\w+)\\s*\\([^)]*\\))\\s*\\{\\s*$");
 
+    private static final Pattern LOCAL_VAR_DECL = Pattern.compile(
+        "^\\s*(int|long|double|float|boolean|char|String|byte|short|var|\\w+(?:<[^>]*>)?)\\s+\\w+\\s*[=;]");
+
     @Override
     public ObfuscationResult apply(SourceFile source, ASTNode ast, SymbolTable symbols) {
         List<String> lines = new ArrayList<>(source.getObfuscatedLines());
@@ -62,8 +65,6 @@ public class ControlFlowFlattener implements PoisonStrategy {
             boolean hasComplexStructures = false;
             boolean hasLocalVarDeclarations = false;
             int innerBraceDepth = 0;
-            Pattern localVarDecl = Pattern.compile(
-                "^\\s*(int|long|double|float|boolean|char|String|byte|short|var|\\w+(?:<[^>]*>)?)\\s+\\w+\\s*[=;]");
 
             for (int j = bodyStart; j < bodyEnd; j++) {
                 String bodyLine = lines.get(j);
@@ -86,7 +87,7 @@ public class ControlFlowFlattener implements PoisonStrategy {
                     hasComplexStructures = true;
                 }
 
-                if (localVarDecl.matcher(bodyTrimmed).matches()) {
+                if (LOCAL_VAR_DECL.matcher(bodyTrimmed).matches()) {
                     hasLocalVarDeclarations = true;
                 }
 

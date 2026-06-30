@@ -200,6 +200,9 @@ public class DeadCodeInjector implements PoisonStrategy {
                 skipping = false;
             }
 
+            // Skip depth tracking in skipped regions to prevent corruption
+            if (skipping) continue;
+
             // Track block comments to avoid false brace counting
             if (line.contains("/*")) inBlockComment = true;
             if (line.contains("*/")) { inBlockComment = false; continue; }

@@ -32,7 +32,7 @@ class DeadCodeInjectorTest {
         for (String line : result.getObfuscatedFile().getObfuscatedLines()) {
             // Note: After Phase 2, this will check for opaque predicates.
             // Currently checks for "if (false)" or other opaque predicates we might inject
-            if (line.contains("if (false)") || line.contains("if (") && line.contains(")")) {
+            if (line.contains("if (false)") || line.contains("if False:")) {
                 foundDeadCodePredicate = true;
             }
         }

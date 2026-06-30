@@ -20,44 +20,84 @@ import java.util.UUID;
 public class SymbolTable {
 
     /** Full set of Java reserved words + common stdlib types we must not rename. */
-    private static final Set<String> PROTECTED_IDENTIFIERS = Set.of(
-        // Java keywords (all 67)
-        "abstract","assert","boolean","break","byte","case","catch","char","class",
-        "const","continue","default","do","double","else","enum","extends","final",
-        "finally","float","for","goto","if","implements","import","instanceof","int",
-        "interface","long","native","new","package","private","protected","public",
-        "return","short","static","strictfp","super","switch","synchronized","this",
-        "throw","throws","transient","try","var","void","volatile","while","record",
-        "sealed","permits","yield","null","true","false",
+    private static final Set<String> PROTECTED_IDENTIFIERS;
+    static {
+        Set<String> s = new java.util.HashSet<>();
+        // Java keywords
+        for (String kw : new String[]{
+            "abstract","assert","boolean","break","byte","case","catch","char","class",
+            "const","continue","default","do","double","else","enum","extends","final",
+            "finally","float","for","goto","if","implements","import","instanceof","int",
+            "interface","long","native","new","package","private","protected","public",
+            "return","short","static","strictfp","super","switch","synchronized","this",
+            "throw","throws","transient","try","var","void","volatile","while","record",
+            "sealed","permits","yield","null","true","false"
+        }) s.add(kw);
         // Common stdlib types
-        "String","System","Object","Class","Exception","RuntimeException","Error",
-        "Throwable","Override","Deprecated","SuppressWarnings","FunctionalInterface",
-        "SafeVarargs","Retention","Target","Documented","Inherited",
-        // JavaFX types
-        "Stage","Scene","Application","Platform","FXMLLoader","FXML","Initializable",
-        "Controller","initialize","start","stop","launch",
-        // Java collections + common
-        "ArrayList","LinkedList","HashMap","HashSet","TreeMap","TreeSet","LinkedHashMap",
-        "List","Map","Set","Collection","Iterator","Optional","Stream","Arrays","Collections",
-        "Math","Integer","Long","Double","Float","Boolean","Character","Byte","Short",
-        "StringBuilder","StringBuffer","CharSequence","Comparable","Iterable",
-        "Runnable","Thread","Callable","Future","ExecutorService",
-        // I/O
-        "File","Path","Files","Paths","BufferedReader","BufferedWriter","FileReader",
-        "FileWriter","InputStreamReader","OutputStreamWriter","FileInputStream","FileOutputStream",
-        "PrintWriter","Scanner","IOException","FileNotFoundException",
-        // Annotations
-        "main","args","toString","equals","hashCode","compareTo","clone","finalize",
-        "getClass","notify","notifyAll","wait","length","size","get","put","add",
-        "remove","contains","isEmpty","clear","iterator","next","hasNext",
-        // Java stdlib methods - must not be renamed to preserve compilation
-        "abs","min","max","pow","sqrt","random","floor","ceil","round","exp","log",
-        "append","insert","delete","deleteCharAt","replace","reverse","setLength","charAt",
-        "valueOf","format","split","trim","substring","indexOf","lastIndexOf","startsWith","endsWith",
-        "keySet","values","entrySet","containsKey","containsValue",
-        "out","in","err","println","print","printf",
-        "setTitle","stream","toUpperCase","getItems"
-    );
+        for (String t : new String[]{
+            "String","System","Object","Class","Exception","RuntimeException","Error",
+            "Throwable","Override","Deprecated","SuppressWarnings","FunctionalInterface",
+            "SafeVarargs","Retention","Target","Documented","Inherited",
+            "Stage","Scene","Application","Platform","FXMLLoader","FXML","Initializable",
+            "Controller","initialize","start","stop","launch",
+            "ArrayList","LinkedList","HashMap","HashSet","TreeMap","TreeSet","LinkedHashMap",
+            "List","Map","Set","Collection","Iterator","Optional","Stream","Arrays","Collections",
+            "Math","Integer","Long","Double","Float","Boolean","Character","Byte","Short",
+            "StringBuilder","StringBuffer","CharSequence","Comparable","Iterable",
+            "Runnable","Thread","Callable","Future","ExecutorService",
+            "File","Path","Files","Paths","BufferedReader","BufferedWriter","FileReader",
+            "FileWriter","InputStreamReader","OutputStreamWriter","FileInputStream","FileOutputStream",
+            "PrintWriter","Scanner","IOException","FileNotFoundException",
+            "main","args","toString","equals","hashCode","compareTo","clone","finalize",
+            "getClass","notify","notifyAll","wait","length","size","get","put","add",
+            "remove","contains","isEmpty","clear","iterator","next","hasNext",
+            "abs","min","max","pow","sqrt","random","floor","ceil","round","exp","log",
+            "append","insert","delete","deleteCharAt","replace","reverse","setLength","charAt",
+            "valueOf","format","split","trim","substring","indexOf","lastIndexOf","startsWith","endsWith",
+            "keySet","values","entrySet","containsKey","containsValue",
+            "out","in","err","println","print","printf",
+            "setTitle","stream","toUpperCase","getItems"
+        }) s.add(t);
+        // Python builtins + special variables
+        for (String p : new String[]{
+            "range","len","type","str","bool","list","dict","tuple",
+            "True","False","None","self","cls",
+            "__name__","__main__","__init__","__str__","__repr__","__enter__","__exit__",
+            "__file__","__doc__","__all__","__import__","__builtins__","__dict__","__class__",
+            "isinstance","issubclass","hasattr","getattr","setattr","delattr",
+            "input","open","property","staticmethod","classmethod",
+            "enumerate","zip","sorted","reversed","any","all","sum",
+            "divmod","complex","del","exec","eval","compile",
+            "hash","id","callable","iter","slice","memoryview","bytearray","bytes",
+            "chr","ord","hex","oct","bin","ascii","repr",
+            "ValueError","TypeError","KeyError","IndexError","AttributeError",
+            "RuntimeError","StopIteration","ImportError","FileNotFoundError","OSError"
+        }) s.add(p);
+        // JavaScript builtins + globals
+        for (String j : new String[]{
+            "console","module","exports","require","process","global","window","document",
+            "undefined","NaN","Infinity","isNaN","isFinite","parseInt","parseFloat",
+            "Array","Number","Symbol","BigInt","Function",
+            "WeakMap","WeakSet","Promise","Proxy","Reflect",
+            "Date","RegExp","RangeError","SyntaxError","ReferenceError",
+            "JSON","Intl","Atomics","SharedArrayBuffer",
+            "setTimeout","setInterval","clearTimeout","clearInterval","setImmediate",
+            "fetch","XMLHttpRequest","Request","Response","Headers","URL","URLSearchParams",
+            "addEventListener","removeEventListener","querySelector","querySelectorAll",
+            "getElementById","getElementsByClassName","getElementsByTagName",
+            "prototype","constructor","hasOwnProperty","isPrototypeOf",
+            "typeof","of",
+            "async","await",
+            "push","pop","shift","unshift","splice","concat","join","sort",
+            "includes","find","findIndex","reduce",
+            "forEach","some","every","keys","entries","from","fill","copyWithin",
+            "has",
+            "log","warn","error","info","debug","table","time","timeEnd","trace",
+            "createElement","createTextNode","appendChild","removeChild","setAttribute",
+            "getAttribute","innerHTML","outerHTML","textContent","classList","style"
+        }) s.add(j);
+        PROTECTED_IDENTIFIERS = java.util.Collections.unmodifiableSet(s);
+    }
 
     private final Map<String, String> mapping;   // scoped-key â†’ replacement
     private final String sessionSalt;
