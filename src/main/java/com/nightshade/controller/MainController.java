@@ -419,15 +419,6 @@ public class MainController implements Initializable {
                 "-fx-text-fill: " + fgHex + ";"
             );
         }
-
-        // Step 3: find every Text node inside the TextArea and set its fill directly
-        // This is the nuclear option that bypasses all CSS cascade issues entirely.
-        javafx.scene.paint.Color fgColor = javafx.scene.paint.Color.web(fgHex);
-        for (javafx.scene.Node node : ta.lookupAll(".text")) {
-            if (node instanceof javafx.scene.text.Text) {
-                ((javafx.scene.text.Text) node).setFill(fgColor);
-            }
-        }
     }
 
 
