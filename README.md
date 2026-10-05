@@ -300,7 +300,7 @@ MIT License — see [LICENSE](LICENSE) for full text.
 | Name | Role | Contact |
 |---|---|---|
 | Ibrahim Salman | Creator & Lead | [@devhms](https://github.com/devhms) |
-| Saif-ur-Rehman | Co-Creator | — |
+| Saif-ur-Rehman | Co-Creator | [@saifurrehman-se02](https://github.com/saifurrehman-se02) |
 
 *University of Engineering and Technology Taxila*
 
