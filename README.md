@@ -304,6 +304,10 @@ MIT License — see [LICENSE](LICENSE) for full text.
 
 *University of Engineering and Technology Taxila*
 
+## 🧑‍💻 Developer
+
+- GitHub: [saifurrehman-se02](https://github.com/saifurrehman-se02)
+
 ---
 
 <div align="center">

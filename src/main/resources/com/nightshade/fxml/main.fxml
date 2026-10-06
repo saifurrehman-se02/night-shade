@@ -13,10 +13,12 @@
   Layout fix: Strategy checkboxes moved to 2-column GridPane to halve their
   vertical footprint and give the file tree enough space to display.
 -->
-<BorderPane xmlns="http://javafx.openjfx.com/javafx/21"
+<ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="AS_NEEDED" vbarPolicy="ALWAYS"
+            style="-fx-background: #0B0C12; -fx-background-color: #0B0C12;"
+            xmlns="http://javafx.openjfx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.nightshade.controller.MainController"
-            styleClass="root-pane">
+            fx:controller="com.nightshade.controller.MainController">
+    <BorderPane styleClass="root-pane">
 
     <!-- ── TOP: Header Bar ────────────────────────────────────────────── -->
     <top>
@@ -122,7 +124,7 @@
             </HBox>
 
             <!-- Synchronized split code editors -->
-            <SplitPane fx:id="diffSplitPane" VBox.vgrow="ALWAYS" dividerPositions="0.5">
+            <SplitPane fx:id="diffSplitPane" VBox.vgrow="ALWAYS" dividerPositions="0.5" minHeight="0">
                 <TextArea fx:id="sourceView" styleClass="code-view source-view"
                           editable="false" wrapText="false"
                           promptText="Select a target file to preview..." />
@@ -135,7 +137,7 @@
 
     <!-- ── BOTTOM: Console Logs & Dashboard Metrics ───────────────────── -->
     <bottom>
-        <VBox styleClass="bottom-panel">
+        <VBox styleClass="bottom-panel" minHeight="200">
 
             <!-- Stats Bar (Hidden by default, holds metrics cards) -->
             <HBox fx:id="statsBar" styleClass="stats-bar" spacing="12" visible="false" managed="false" alignment="CENTER_LEFT">
@@ -194,7 +196,7 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <Button text="CLEAR" styleClass="log-clear-btn" onAction="#onClearLog" />
                     </HBox>
-                    <ListView fx:id="logView" styleClass="log-view" prefHeight="110" />
+                    <ListView fx:id="logView" styleClass="log-view" minHeight="150" prefHeight="150" VBox.vgrow="ALWAYS" />
                 </VBox>
             </VBox>
 
@@ -202,3 +204,4 @@
     </bottom>
 
 </BorderPane>
+</ScrollPane>

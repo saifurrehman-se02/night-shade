@@ -9,6 +9,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -40,6 +43,27 @@ public class Main extends Application {
         }
         FXMLLoader loader = new FXMLLoader(fxmlUrl);
         Scene scene = new Scene(loader.load(), 1280, 800);
+
+        stage.setMaximized(true);
+        stage.setResizable(true);
+        scene.setFill(javafx.scene.paint.Color.web("#0B0C12"));
+
+        Scale scale = new Scale(1, 1);
+        scale.setPivotX(0);
+        scale.setPivotY(0);
+        ((javafx.scene.control.ScrollPane) scene.getRoot()).getContent().getTransforms().add(scale);
+
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.isControlDown()) {
+                if (e.getCode() == KeyCode.EQUALS || e.getCode() == KeyCode.ADD) {
+                    scale.setX(scale.getX() * 1.1); scale.setY(scale.getY() * 1.1); e.consume();
+                } else if (e.getCode() == KeyCode.MINUS || e.getCode() == KeyCode.SUBTRACT) {
+                    scale.setX(scale.getX() / 1.1); scale.setY(scale.getY() / 1.1); e.consume();
+                } else if (e.getCode() == KeyCode.DIGIT0 || e.getCode() == KeyCode.NUMPAD0) {
+                    scale.setX(1.0); scale.setY(1.0); e.consume();
+                }
+            }
+        });
 
         // Apply dark terminal theme
         URL cssUrl = getClass().getResource("/com/nightshade/css/nightshade.css");
